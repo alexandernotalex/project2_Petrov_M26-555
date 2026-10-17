@@ -1,7 +1,9 @@
+import shlex
+
 from prompt import string
+
 from primitive_db.core import create_table, drop_table
 from primitive_db.utils import load_metadata, save_metadata
-import shlex
 
 DATABASE_FILE = "metadata.json"
 
@@ -37,7 +39,7 @@ def print_help():
 
 
 def parse_columns(args_list):
-    """Вспомогательная функция для сборки словаря столбцов из аргументов командной строки.
+    """Вспомогательная функция для сборки словаря столбцов
 
     Ожидает аргументы в формате имя:тип (например, name:str age:int)
     """
@@ -45,7 +47,8 @@ def parse_columns(args_list):
     for arg in args_list:
         if ":" not in arg:
             print(
-                f"Предупреждение: Неверный формат аргумента '{arg}'. Используйте имя:тип."
+                "Предупреждение:" \
+                "Неверный формат аргумента '{arg}'. Используйте имя:тип."
             )
             continue
         col_name, col_type = arg.split(":", 1)
@@ -105,7 +108,8 @@ def run():
 
                 if not columns_dict:
                     print(
-                        "Ошибка: Не удалось распознать ни одного столбца для создания таблицы."
+                        "Ошибка:" \
+                        "Не удалось распознать ни одного столбца для создания таблицы."
                     )
                     continue
 
