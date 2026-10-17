@@ -1,4 +1,4 @@
-from primitive_db.decorators import handle_db_errors
+from primitive_db.decorators import confirm_action, handle_db_errors, log_time
 from primitive_db.utils import load_table_data
 
 ALLOWED_TYPES = {"int", "str", "bool"}
@@ -14,7 +14,8 @@ def create_table(metadata, table_name, columns):
     for col_name, col_type in columns.items():
         if col_type not in ALLOWED_TYPES:
             raise ValueError(
-                f"Недопустимый тип данных '{col_type}' для столбца '{col_name}'. Разрешенные типы: int, str, bool."
+                f"Недопустимый тип данных '{col_type}' для столбца '{col_name}'. "
+                "Разрешенные типы: int, str, bool."
             )
 
     # Формируем структуру новой таблицы
@@ -34,6 +35,7 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
+@confirm_action("удаление таблицы")
 @handle_db_errors
 def drop_table(metadata, table_name):
     """Удаляет таблицу из метаданных."""
@@ -45,6 +47,7 @@ def drop_table(metadata, table_name):
     return metadata
 
 
+@log_time
 @handle_db_errors
 def insert(metadata, table_name, values):
     """Добавляет новую запись в таблицу."""
@@ -75,7 +78,8 @@ def insert(metadata, table_name, values):
                     actual_val = False
                 else:
                     raise ValueError(
-                        f"Не удалось привести '{val}' к типу bool для столбца '{col_name}'."
+                        f"Не удалось привести '{val}' к типу bool "
+                        f"для столбца '{col_name}'."
                     )
             else:
                 actual_val = bool(val)
@@ -95,6 +99,7 @@ def insert(metadata, table_name, values):
     return table_data
 
 
+@log_time
 @handle_db_errors
 def select(table_data, where_clause=None):
     """Выбирает и фильтрует данные из таблицы."""
@@ -135,6 +140,7 @@ def update(table_data, set_clause, where_clause):
     return table_data
 
 
+@confirm_action("удаление записи")
 @handle_db_errors
 def delete(table_data, where_clause):
     """Удаляет записи из таблицы по условию."""

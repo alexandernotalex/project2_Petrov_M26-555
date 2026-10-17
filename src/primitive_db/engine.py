@@ -1,13 +1,17 @@
 import shlex
-from prompt import string
-from prettytable import PrettyTable
 
-from primitive_db.core import create_table, drop_table, insert, select, update, delete
-from primitive_db.utils import (
-    load_metadata, save_metadata, 
-    load_table_data, save_table_data
-)
+from prettytable import PrettyTable
+from prompt import string
+
+from primitive_db.cache import create_cacher
+from primitive_db.core import create_table, delete, drop_table, insert, select, update
 from primitive_db.parser import parse_clause
+from primitive_db.utils import (
+    load_metadata,
+    load_table_data,
+    save_metadata,
+    save_table_data,
+)
 
 DATABASE_FILE = "metadata.json"
 
@@ -17,7 +21,9 @@ def print_help():
     print("\n***Процесс работы с таблицей***")
     print("Функции:")
     print("  create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
-    print("  list_tables                                  - показать список всех таблиц")
+    print(
+        "  list_tables                                  - показать список всех таблиц"
+    )
     print("  drop_table <имя_таблицы>                     - удалить таблицу")
     print("  insert <имя_таблицы> <значение1> <значение2>..- добавить запись")
     print("  select <имя_таблицы> [условие]               - выбрать и показать записи")
@@ -32,7 +38,10 @@ def parse_columns(args_list):
     columns = {}
     for arg in args_list:
         if ":" not in arg:
-            print(f"Предупреждение: Неверный формат аргумента '{arg}'. Используйте имя:тип.")
+            print(
+                f"Предупреждение: Неверный формат аргумента '{arg}'. "
+                "Используйте имя:тип."
+            )
             continue
         col_name, col_type = arg.split(":", 1)
         columns[col_name] = col_type
@@ -48,19 +57,21 @@ def display_with_prettytable(columns_schema, rows_data):
     table = PrettyTable()
     # Устанавливаем заголовки столбцов на основе схемы метаданных
     table.field_names = list(columns_schema.keys())
-    
+
     # Добавляем строки
     for row in rows_data:
         # Собираем значения строки в правильном порядке столбцов
         row_values = [row.get(col) for col in table.field_names]
         table.add_row(row_values)
-        
+
     print(table)
 
 
 def run():
     print("--- Примитивная СУБД запущена ---")
     print("Введите 'help' для просмотра всех доступных CRUD-команд.\n")
+
+    db_cache = create_cacher()
 
     while True:
         metadata = load_metadata(DATABASE_FILE)
@@ -96,8 +107,12 @@ def run():
                     print()
 
             case "create_table":
+                db_cache = create_cacher()
                 if len(args) < 2:
-                    print("Ошибка: Недостаточно аргументов. Пример: create_table users name:str age:int")
+                    print(
+                        "Ошибка: Недостаточно аргументов. "
+                        "Пример: create_table users name:str age:int"
+                    )
                     continue
                 table_name = args[0]
                 columns_dict = parse_columns(args[1:])
@@ -108,6 +123,7 @@ def run():
                 save_metadata(DATABASE_FILE, metadata)
 
             case "drop_table":
+                db_cache = create_cacher()
                 if len(args) < 1:
                     print("Ошибка: Укажите имя таблицы. Пример: drop_table users")
                     continue
@@ -116,12 +132,13 @@ def run():
                 save_metadata(DATABASE_FILE, metadata)
 
             case "insert":
+                db_cache = create_cacher()
                 if len(args) < 2:
                     print("Ошибка: Пример использования: insert users Ivan 25 True")
                     continue
                 table_name = args[0]
                 values = args[1:]
-                
+
                 # Вызываем insert, который внутри себя загрузит и обновит данные таблицы
                 updated_data = insert(metadata, table_name, values)
                 if updated_data is not None:
@@ -130,14 +147,13 @@ def run():
 
             case "select":
                 if len(args) < 1:
-                    print("Ошибка: Укажите имя таблицы. Пример: select users или select users age = 25")
+                    print("Ошибка: Укажите имя таблицы. Пример: select users")
                     continue
                 table_name = args[0]
                 if table_name not in metadata:
                     print(f"Ошибка: Таблицы '{table_name}' не существует.")
                     continue
-                
-                # Соединяем оставшиеся аргументы обратно в строку для парсера условий
+
                 where_str = " ".join(args[1:])
                 try:
                     where_clause = parse_clause(where_str) if where_str else None
@@ -145,15 +161,21 @@ def run():
                     print(f"Ошибка парсинга условий WHERE: {e}")
                     continue
 
-                table_data = load_table_data(table_name)
-                filtered_rows = select(table_data, where_clause)
-                
-                # Выводим данные через PrettyTable
+                cache_key = f"{table_name}:{where_str if where_str else 'all'}"
+
+                def get_data_func():
+                    return select(load_table_data(table_name), where_clause)
+
+                filtered_rows = db_cache(cache_key, get_data_func)
+
                 display_with_prettytable(metadata[table_name]["columns"], filtered_rows)
 
             case "update":
                 if len(args) < 4 or args[1].lower() != "set":
-                    print("Ошибка: Пример использования: update users set is_active = False where age = 25")
+                    print(
+                        "Ошибка: Пример использования: "
+                        "update users set is_active = False where age = 25"
+                    )
                     continue
                 table_name = args[0]
                 if table_name not in metadata:
@@ -165,7 +187,7 @@ def run():
                 if "where" not in full_str.lower():
                     print("Ошибка: Команда UPDATE требует обязательного условия WHERE.")
                     continue
-                
+
                 # Аккуратно режем по ключевому слову 'where'
                 parts = full_str.lower().split("where", 1)
                 set_str = parts[0].replace("set", "").strip()
@@ -181,6 +203,8 @@ def run():
                 table_data = load_table_data(table_name)
                 updated_data = update(table_data, set_clause, where_clause)
                 save_table_data(table_name, updated_data)
+
+                db_cache = create_cacher()
 
             case "delete":
                 if len(args) < 3 or args[1].lower() != "where":
@@ -201,6 +225,8 @@ def run():
                 table_data = load_table_data(table_name)
                 updated_data = delete(table_data, where_clause)
                 save_table_data(table_name, updated_data)
+
+                db_cache = create_cacher()
 
             case _:
                 print(f"Неизвестная команда '{command}'. Введите 'help' для справки.")
