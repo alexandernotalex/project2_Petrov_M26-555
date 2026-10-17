@@ -20,7 +20,12 @@ def create_table(metadata, table_name, columns):
             print("Разрешенные типы: int, str, bool.")
             return metadata
 
-    new_table_columns = {"id": "int"}  
+    new_table_columns = {}
+    
+    user_column_names = {col.lower() for col in columns.keys()}
+    if "id" not in user_column_names:
+        new_table_columns["id"] = "int"
+        
     new_table_columns.update(columns)
     metadata[table_name] = {
         "columns": new_table_columns,

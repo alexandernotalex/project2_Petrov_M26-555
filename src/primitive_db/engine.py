@@ -56,7 +56,7 @@ def parse_columns(args_list):
 def run():
     """Главная функция с основным циклом программы."""
     print("--- Примитивная СУБД запущена ---")
-    print("Доступные команды: create_table, drop_table, help, exit\n")
+    print("Доступные команды: create_table, list_tables, drop_table, help, exit\n")
 
     while True:
         metadata = load_metadata(DATABASE_FILE)
@@ -81,12 +81,16 @@ def run():
                 break
 
             case "help":
-                print("\nСправка по командам:")
-                print(
-                    "  create_table [имя_таблицы] [столбец1:тип] [столбец2:тип] ..."
-                )
-                print("  drop_table [имя_таблицы]")
-                print("  exit - Выйти из программы\n")
+                print_help()
+
+            case "list_tables":
+                if not metadata:
+                    print("В базе данных пока нет ни одной таблицы.")
+                else:
+                    print("\nСписок существующих таблиц:")
+                    for table in metadata.keys():
+                        print(f"  - {table}")
+                    print()
 
             case "create_table":
                 if len(args) < 2:
