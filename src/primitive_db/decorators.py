@@ -76,3 +76,19 @@ def log_time(func):
         return result
 
     return wrapper
+
+
+def create_cacher():
+    """Реализует функцию с замыканием для кэширования результатов select."""
+    cache_store = {}
+
+    def cache_result(key, value_func):
+        if key in cache_store:
+            print(f"[КЭШ] Результат для запроса '{key}' взят из кэша.")
+            return cache_store[key]
+        print(f"[КЭШ] Запрос '{key}' не найден в кэше. Вычисляем значения...")
+        result = value_func()
+        cache_store[key] = result
+        return result
+
+    return cache_result

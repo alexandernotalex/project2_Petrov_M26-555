@@ -3,8 +3,9 @@ import shlex
 from prettytable import PrettyTable
 from prompt import string
 
-from primitive_db.cache import create_cacher
+from primitive_db.constants import DATABASE_FILE
 from primitive_db.core import create_table, delete, drop_table, insert, select, update
+from primitive_db.decorators import create_cacher
 from primitive_db.parser import parse_clause
 from primitive_db.utils import (
     load_metadata,
@@ -12,8 +13,6 @@ from primitive_db.utils import (
     save_metadata,
     save_table_data,
 )
-
-DATABASE_FILE = "metadata.json"
 
 
 def print_help():

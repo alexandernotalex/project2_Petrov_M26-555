@@ -227,3 +227,4 @@ __pycache__/
 metadata.json
 data/
 demo.txt
+.venv/

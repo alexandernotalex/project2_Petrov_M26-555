@@ -1,7 +1,6 @@
+from primitive_db.constants import ALLOWED_TYPES
 from primitive_db.decorators import confirm_action, handle_db_errors, log_time
 from primitive_db.utils import load_table_data
-
-ALLOWED_TYPES = {"int", "str", "bool"}
 
 
 @handle_db_errors
