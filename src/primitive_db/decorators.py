@@ -37,7 +37,6 @@ def confirm_action(action_name):
     """Декоратор с аргументом для подтверждения опасных операций пользователя."""
 
     def decorator(func):
-        # НАДО ЗДЕСЬ: сохраняем метаданные оригинальной функции core
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             confirmation = string(
@@ -46,7 +45,6 @@ def confirm_action(action_name):
 
             if confirmation.strip().lower() != "y":
                 print(f"Операция '{action_name}' отменена пользователем.")
-                # Возвращаем первый переданный аргумент (metadata или table_data)
                 return args[0] if args else None
 
             return func(*args, **kwargs)
@@ -61,16 +59,12 @@ def log_time(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Фиксируем время начала операции
         start_time = time.monotonic()
 
-        # Выполняем основную функцию
         result = func(*args, **kwargs)
 
-        # Вычисляем разницу во времени
         elapsed_time = time.monotonic() - start_time
 
-        # Выводим результат в консоль с округлением до трех знаков после запятой
         print(f"Функция <{func.__name__}> выполнилась за {elapsed_time:.3f} секунд.")
 
         return result

@@ -9,7 +9,6 @@ def create_table(metadata, table_name, columns):
     if table_name in metadata:
         raise KeyError(table_name)
 
-    # Валидация типов данных
     for col_name, col_type in columns.items():
         if col_type not in ALLOWED_TYPES:
             raise ValueError(
@@ -17,10 +16,8 @@ def create_table(metadata, table_name, columns):
                 "Разрешенные типы: int, str, bool."
             )
 
-    # Формируем структуру новой таблицы
     new_table_columns = {}
 
-    # Приводим к нижнему регистру для проверки на наличие id/ID
     user_column_names = {col.lower() for col in columns.keys()}
 
     if "id" not in user_column_names:
@@ -87,7 +84,6 @@ def insert(metadata, table_name, values):
 
         new_row[col_name] = actual_val
 
-    # Генерация ID
     existing_ids = [row["id"] for row in table_data if "id" in row]
     new_id = max(existing_ids) + 1 if existing_ids else 1
 

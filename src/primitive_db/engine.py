@@ -54,12 +54,9 @@ def display_with_prettytable(columns_schema, rows_data):
         return
 
     table = PrettyTable()
-    # Устанавливаем заголовки столбцов на основе схемы метаданных
     table.field_names = list(columns_schema.keys())
 
-    # Добавляем строки
     for row in rows_data:
-        # Собираем значения строки в правильном порядке столбцов
         row_values = [row.get(col) for col in table.field_names]
         table.add_row(row_values)
 
@@ -138,7 +135,6 @@ def run():
                 table_name = args[0]
                 values = args[1:]
 
-                # Вызываем insert, который внутри себя загрузит и обновит данные таблицы
                 updated_data = insert(metadata, table_name, values)
                 if updated_data is not None:
                     save_table_data(table_name, updated_data)
@@ -181,13 +177,11 @@ def run():
                     print(f"Ошибка: Таблицы '{table_name}' не существует.")
                     continue
 
-                # Восстанавливаем строку и делим её на куски SET и WHERE
                 full_str = " ".join(args[1:])
                 if "where" not in full_str.lower():
                     print("Ошибка: Команда UPDATE требует обязательного условия WHERE.")
                     continue
 
-                # Аккуратно режем по ключевому слову 'where'
                 parts = full_str.lower().split("where", 1)
                 set_str = parts[0].replace("set", "").strip()
                 where_str = parts[1].strip()

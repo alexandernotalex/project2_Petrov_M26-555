@@ -6,7 +6,6 @@ def parse_kv_pair(pair_str):
     if "=" not in pair_str:
         raise ValueError(f"Отсутствует знак равенства '=' в выражении: '{pair_str}'")
 
-    # Разделяем по первому знаку '=' и убираем лишние пробелы по краям
     key, val_str = pair_str.split("=", 1)
     key = key.strip()
     val_str = val_str.strip()
@@ -14,25 +13,21 @@ def parse_kv_pair(pair_str):
     if not key or not val_str:
         raise ValueError(f"Некорректный формат выражения: '{pair_str}'")
 
-    # 1. Проверяем, является ли значение строкой в кавычках
     if (val_str.startswith('"') and val_str.endswith('"')) or (
         val_str.startswith("'") and val_str.endswith("'")
     ):
-        return key, val_str[1:-1]  # Возвращаем строку без внешних кавычек
+        return key, val_str[1:-1]
 
-    # 2. Проверяем булевы значения
     if val_str.lower() == "true":
         return key, True
     if val_str.lower() == "false":
         return key, False
 
-    # 3. Проверяем целые числа
     try:
         return key, int(val_str)
     except ValueError:
         pass
 
-    # Если ни один тип не подошел и кавычек не было — выдаем ошибку
     raise ValueError(
         f"Не удалось определить тип значения для '{key}'. "
         f"Если это текстовая строка, обязательно оберните её в кавычки "
